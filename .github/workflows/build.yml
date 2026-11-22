@@ -19,11 +19,21 @@ jobs:
           gradle-version: 8.7
       - name: Build debug APK
         run: |
-          DIR=$(dirname "$(find . -name settings.gradle.kts | head -1)")
+          SET=$(find . -name settings.gradle.kts | head -1)
+          if [ -z "$SET" ]; then
+            ZIP=$(find . -name "*.zip" | head -1)
+            echo "Zip: $ZIP"
+            mkdir -p /tmp/proj
+            unzip -q -o "$ZIP" -d /tmp/proj
+            SET=$(find /tmp/proj -name settings.gradle.kts | head -1)
+          fi
+          DIR=$(dirname "$SET")
           echo "Project dir: $DIR"
           cd "$DIR"
           gradle assembleDebug --no-daemon
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp app/build/outputs/apk/debug/*.apk "$GITHUB_WORKSPACE/out/"
       - uses: actions/upload-artifact@v4
         with:
           name: HesabYar-apk
-          path: "**/build/outputs/apk/debug/*.apk"
+          path: out/*.apk
